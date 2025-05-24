@@ -1,18 +1,27 @@
 let platform;
-let cylinder;
 let droplets = [];
 let dropletCount = 100;
 let dropletSpeed = 4;
 let fillLevel = 0;
 let fillMax = 100;
-
+let bgColor = '#A3E9F1';
 let streamX;
 let streamWidth = 60;
 let streamTargetX;
 let streamEasing = 0.05;
 
+let recipientImg;
+let recipientX, recipientY;
+let recipientW = 60;
+let recipientH = 120;
+
+function preload() {
+  // Asegúrate de que estas imágenes estén en tu carpeta "Assets/"
+  recipientImg = loadImage("Assets/licuadora.png");
+}
+
 function setup() {
-  createCanvas(600, 400);
+  createCanvas(834, 1194);
 
   platform = {
     x: width / 2 - 50,
@@ -24,13 +33,9 @@ function setup() {
     changeTimer: 0
   };
 
-  cylinder = {
-    x: platform.x + platform.w / 2,
-    y: platform.y - 60,
-    w: 30,
-    h: 60,
-    speed: 5
-  };
+  // Inicializa la posición del recipiente (centrado sobre la plataforma)
+  recipientX = platform.x + platform.w / 2;
+  recipientY = platform.y - recipientH;
 
   streamX = random(width - streamWidth);
   streamTargetX = random(width - streamWidth);
@@ -41,12 +46,14 @@ function setup() {
       y: random(-height, 0)
     });
   }
+
+  imageMode(CENTER);
 }
 
 function draw() {
-  background(255);
+  background(bgColor);
 
-  // Move platform
+  // Plataforma móvil
   platform.x += platform.speed * platform.dir;
   if (platform.x <= 0 || platform.x + platform.w >= width) {
     platform.dir *= -1;
@@ -59,42 +66,47 @@ function draw() {
     platform.changeTimer = 0;
   }
 
-  // Draw platform
+  // Dibuja la plataforma
   fill(100);
   rect(platform.x, platform.y, platform.w, platform.h);
 
-  // Move cylinder with platform
-  cylinder.x += platform.speed * platform.dir;
+  // Movimiento del recipiente
+  recipientX += platform.speed * platform.dir;
 
-  // Keyboard control
   if (keyIsDown(LEFT_ARROW)) {
-    cylinder.x -= cylinder.speed;
+    recipientX -= 5;
   }
   if (keyIsDown(RIGHT_ARROW)) {
-    cylinder.x += cylinder.speed;
+    recipientX += 5;
   }
 
-  // Constrain cylinder to platform
-  cylinder.x = constrain(cylinder.x, platform.x + cylinder.w / 2, platform.x + platform.w - cylinder.w / 2);
+  recipientX = constrain(recipientX, platform.x + recipientW / 2, platform.x + platform.w - recipientW / 2);
 
-  // Draw cylinder
-  fill(lerpColor(color(200), color(0, 0, 255), fillLevel / fillMax));
+  // Dibuja el recipiente como imagen
+  if (recipientImg) {
+    image(recipientImg, recipientX, recipientY + recipientH / 2, recipientW, recipientH);
+  } else {
+    fill(200);
+    rectMode(CENTER);
+    rect(recipientX, recipientY + recipientH / 2, recipientW, recipientH);
+    rectMode(CORNER);
+  }
+
+  // Dibuja el nivel de llenado dentro del recipiente
+  let fillHeight = map(fillLevel, 0, fillMax, 0, recipientH);
+  fill(0, 0, 255, 150); // Azul semitransparente
+  noStroke();
   rectMode(CENTER);
-  rect(cylinder.x, cylinder.y + cylinder.h / 2, cylinder.w, cylinder.h);
+  rect(recipientX, recipientY + recipientH - fillHeight / 2, recipientW * 0.7, fillHeight);
   rectMode(CORNER);
 
-  // Draw fill level inside cylinder
-  fill(0, 0, 255);
-  let fillHeight = map(fillLevel, 0, fillMax, 0, cylinder.h);
-  rect(cylinder.x - cylinder.w / 2, cylinder.y + cylinder.h - fillHeight, cylinder.w, fillHeight);
-
-  // Move stream toward target
+  // Movimiento del chorro de gotas
   streamX += (streamTargetX - streamX) * streamEasing;
   if (abs(streamTargetX - streamX) < 1) {
     streamTargetX = random(width - streamWidth);
   }
 
-  // Update droplets
+  // Dibuja las gotas
   for (let d of droplets) {
     d.y += dropletSpeed;
 
@@ -109,11 +121,12 @@ function draw() {
     noStroke();
     ellipse(dropX, d.y, 6, 6);
 
+    // Verifica si cae dentro del recipiente
     if (
-      dropX > cylinder.x - cylinder.w / 2 &&
-      dropX < cylinder.x + cylinder.w / 2 &&
-      d.y > cylinder.y &&
-      d.y < cylinder.y + cylinder.h
+      dropX > recipientX - recipientW / 2 &&
+      dropX < recipientX + recipientW / 2 &&
+      d.y > recipientY &&
+      d.y < recipientY + recipientH
     ) {
       d.y = random(-100, 0);
       d.xOffset = random(streamWidth);
@@ -121,12 +134,12 @@ function draw() {
     }
   }
 
-  // Game over
+  // Mensaje al llenar
   if (fillLevel >= fillMax) {
     fill(0);
     textSize(32);
     textAlign(CENTER, CENTER);
-    text("Cylinder Filled!", width / 2, height / 2);
+    text("Recipient Filled!", width / 2, height / 2);
     noLoop();
   }
 }

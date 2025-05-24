@@ -2,22 +2,40 @@ let circleX, circleY, radius;
 let lineStart = null;
 let lineEnd = null;
 let resultDisplayed = false;
+let bgColor = '#A3E9F1';
+
+let yellowCircleImg;
+let customCursorImg;
+
+function preload() {
+  yellowCircleImg = loadImage("Assets/mitad.png");
+  customCursorImg = loadImage("Assets/cuchillo.png");
+}
 
 function setup() {
-  createCanvas(600, 600);
+  createCanvas(834, 1194);
   circleX = width / 2;
   circleY = height / 2;
   radius = 200;
+  imageMode(CENTER);
   noLoop(); // Only draw when needed
+
+  // Set custom cursor with (hotspotX, hotspotY) and fallback 'auto'
+  cursor(customCursorImg, 0, 0); // Change (0, 0) to reposition the click hotspot
 }
 
 function draw() {
-  background(255);
+  background(bgColor);
 
-  // Draw the yellow circle
-  fill(255, 255, 0);
-  stroke(0);
-  ellipse(circleX, circleY, radius * 2, radius * 2);
+  // Draw the yellow circle as an image
+  if (yellowCircleImg) {
+    image(yellowCircleImg, circleX, circleY, radius * 2, radius * 2);
+  } else {
+    // Fallback if image doesn't load
+    fill(255, 255, 0);
+    stroke(0);
+    ellipse(circleX, circleY, radius * 2, radius * 2);
+  }
 
   // If both line points are defined, draw the line and calculate result
   if (lineStart && lineEnd) {
@@ -48,7 +66,8 @@ function calculateAndDisplaySplit() {
   for (let x = int(circleX - radius); x <= int(circleX + radius); x++) {
     for (let y = int(circleY - radius); y <= int(circleY + radius); y++) {
       if (dist(x, y, circleX, circleY) <= radius) {
-        let d = (lineEnd.x - lineStart.x) * (y - lineStart.y) - (lineEnd.y - lineStart.y) * (x - lineStart.x);
+        let d = (lineEnd.x - lineStart.x) * (y - lineStart.y) - 
+                (lineEnd.y - lineStart.y) * (x - lineStart.x);
         if (d > 0) {
           side1++;
         } else {

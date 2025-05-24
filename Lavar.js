@@ -4,7 +4,7 @@ let dropletSpeed = 5;
 let flowX = 200;
 let flowWidth = 80;
 let flowTargetX = 200;
-
+let bgColor = '#A3E9F1';
 let circleX;
 let circleY;
 let circleRadius = 40;
@@ -21,6 +21,7 @@ function preload() {
 
 function setup() {
   createCanvas(834, 1194);
+  
   circleX = width / 2;
   circleY = height / 2;
 
@@ -35,6 +36,7 @@ function setup() {
 }
 
 function draw() {
+  background(bgColor);
   if (gameOver) {
     background(0);
     fill(255);
@@ -43,8 +45,6 @@ function draw() {
     text("Game Over", width / 2, height / 2);
     return;
   }
-
-  background(255);
 
   // Faster easing for more dynamic horizontal motion
   let easing = 0.15;
