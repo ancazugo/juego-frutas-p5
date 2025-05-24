@@ -13,8 +13,14 @@ let dragging = false;
 let contactTime = 0;
 let gameOver = false;
 
+let playerImg;
+
+function preload() {
+  playerImg = loadImage("Assets/araza.png"); // Replace with the correct path or filename
+}
+
 function setup() {
-  createCanvas(600, 400);
+  createCanvas(834, 1194);
   circleX = width / 2;
   circleY = height / 2;
 
@@ -77,9 +83,11 @@ function draw() {
   let blue = color(0, 0, 255);
   let blended = lerpColor(yellow, blue, blueRatio);
 
-  fill(blended);
-  stroke(0);
-  ellipse(circleX, circleY, circleRadius * 2);
+  // Draw the image with tint
+  tint(blended);
+  imageMode(CENTER);
+  image(playerImg, circleX, circleY, circleRadius * 2, circleRadius * 2);
+  noTint(); // reset tint for other drawings
 
   if (contactTime >= 3) {
     gameOver = true;
