@@ -3,9 +3,16 @@ let dropCount = 0;
 let targetCount = 30;
 let isPaused = false;
 let recipient;
+let bgColor = '#A3E9F1';
 let minSpeed = 5;
 let maxSpeed = 8;
-let droppedCount = 0; // Add counter for dropped sugar
+let droppedCount = 0;
+let balanzaImg;
+let caughtDrops = []; // Array to store positions of caught drops
+
+function preload() {
+  balanzaImg = loadImage('Assets/Balanza.png');
+}
 
 function setup() {
   createCanvas(834, 600);
@@ -14,27 +21,40 @@ function setup() {
   recipient = {
     x: width/2,
     y: height - 100,
-    w: 200,
-    h: 160
+    w: 480/3,
+    h: 190/3,
+    img: balanzaImg
   };
 }
 
 function draw() {
-  background('#FFF5E6'); // Light cream background
+  background(bgColor);
   
-  // Draw recipient
-  fill(200);
-  rectMode(CENTER);
-  rect(recipient.x, recipient.y, recipient.w, recipient.h);
+  // Draw balanza
+  imageMode(CENTER);
+  image(recipient.img, recipient.x, recipient.y, recipient.w, recipient.h);
+  
+  // Draw accumulated drops on balanza
+  fill(255);
+  stroke(200);
+  for (let caughtDrop of caughtDrops) {
+    circle(
+      recipient.x + caughtDrop.xOffset,
+      recipient.y + caughtDrop.yOffset,
+      caughtDrop.size
+    );
+  }
   
   // Create new drops when not paused
-  if (!isPaused && drops.length < 50) { // Limit max drops on screen
-    drops.push({
-      x: random(width),
-      y: 0,
-      speed: random(minSpeed, maxSpeed),
-      size: random(8, 12)
-    });
+  if (!isPaused && drops.length < 30) {
+    if (random(1) < 0.03) {
+      drops.push({
+        x: random(width),
+        y: 0,
+        speed: random(minSpeed, maxSpeed),
+        size: random(8, 12)
+      });
+    }
   }
   
   // Update and draw drops
@@ -55,6 +75,17 @@ function draw() {
         drop.y < recipient.y + recipient.h/2 &&
         drop.x > recipient.x - recipient.w/2 &&
         drop.x < recipient.x + recipient.w/2) {
+      // Calculate relative position on the balanza
+      let xOffset = drop.x - recipient.x;
+      let yOffset = drop.y - recipient.y;
+      
+      // Add to caught drops with slight random adjustment to prevent perfect stacking
+      caughtDrops.push({
+        xOffset: xOffset + random(-5, 5),
+        yOffset: yOffset + random(-2, 2),
+        size: drop.size
+      });
+      
       drops.splice(i, 1);
       dropCount++;
     }
@@ -67,18 +98,22 @@ function draw() {
   }
   
   // Display counters
-  textSize(32);
+  textSize(15);
   textAlign(CENTER);
   fill(0);
-  text(`Sugar drops: ${dropCount}/${targetCount}`, width/2, 50);
-  text(`Missed drops: ${droppedCount}/${targetCount}`, width/2, 90);
+  // Display drop count on the balanza
+  text(dropCount, recipient.x, recipient.y + 17);
+  textSize(32);
+  // Display target and missed drops at the top
+  text(`Target: ${targetCount}`, width/4, 50);
+  text(`Missed: ${droppedCount}/${targetCount}`, width * 3/4, 50);
   
   // Game over conditions
   if (dropCount >= targetCount) {
     textSize(48);
     text('Perfect amount!', width/2, height/2);
     noLoop();
-  } else if (droppedCount > targetCount) { // Game over if too many drops missed
+  } else if (droppedCount > targetCount) {
     textSize(48);
     fill(255, 0, 0);
     text('Game Over!', width/2, height/2);
