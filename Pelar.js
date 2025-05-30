@@ -1,50 +1,89 @@
 let topImage;
 let bottomImage;
-let cursorImg;
-let maskLayer;
+let knifeImage;
+let maskCanvas;
+let isMousePressed = false;
 
 function preload() {
-  topImage = loadImage('Assets/araza.png');
-  bottomImage = loadImage('Assets/mitad.png');
-  cursorImg = loadImage('Assets/cuchillo.png');
+    // Load all required images
+    topImage = loadImage('Assets/araza.png');
+    bottomImage = loadImage('Assets/mitad.png');
+    knifeImage = loadImage('Assets/cuchillo.png');
 }
 
 function setup() {
-    // Optionally scale images
-    let scaleFactor = 8;
-    topImage.resize(topImage.width * scaleFactor, topImage.height * scaleFactor);
-    bottomImage.resize(bottomImage.width * scaleFactor, bottomImage.height * scaleFactor);
-    cursorImg.resize(cursorImg.width * 3, cursorImg.height * 3);
-  
-    createCanvas(topImage.width, topImage.height);
-  
-    // Initialize mask layer (white = visible, black = transparent)
-    maskLayer = createGraphics(width, height);
-    maskLayer.background(255); // Start with top image fully visible
+    // Set up the canvas and images
+    createCanvas(800, 600);
+    
+    // Resize images to fit canvas while maintaining aspect ratio
+    let scale = Math.min(width / topImage.width, height / topImage.height) * 0.8;
+    topImage.resize(topImage.width * scale, topImage.height * scale);
+    bottomImage.resize(bottomImage.width * scale, bottomImage.height * scale);
+    
+    // Resize knife cursor to reasonable size
+    knifeImage.resize(knifeImage.width * 3, knifeImage.height * 3);
+    
+    // Create mask canvas with white background (fully visible)
+    maskCanvas = createGraphics(width, height);
+    maskCanvas.background(255);
 }
 
 function draw() {
     background(220);
-  
-    // Show bottom image first
-    image(bottomImage, 0, 0);
-  
-    // Apply mask to top image
-    let topMasked = topImage.get();
-    topMasked.mask(maskLayer);
-    image(topMasked, 0, 0);
-  
-    // Custom cursor
-    image(cursorImg, mouseX - cursorImg.width / 2, mouseY - cursorImg.height / 2);
-}
-  
-function mouseDragged() {
-    // Draw black on mask where cursor moves to hide top image
-    maskLayer.noStroke();
-    maskLayer.fill(0);
-    maskLayer.ellipse(mouseX, mouseY, cursorImg.width, cursorImg.height);
-}
-  
-function mouseMoved() {
+    if (frameCount % 5 === 0) {
+        maskCanvas.filter(BLUR, 1);
+    }
+    // Calculate center position for images
+    let x = (width - topImage.width) / 2;
+    let y = (height - topImage.height) / 2;
+    
+    // Draw bottom image
+    image(bottomImage, x, y);
+    
+    // Create a copy of the top image and apply mask
+    push();
+    let maskedTop = createImage(topImage.width, topImage.height);
+    maskedTop.copy(topImage, 0, 0, topImage.width, topImage.height, 0, 0, topImage.width, topImage.height);
+
+    // Get the mask for the specific region as a p5.Image
+    let currentMask = createImage(topImage.width, topImage.height);
+    currentMask.copy(maskCanvas, x, y, topImage.width, topImage.height, 0, 0, topImage.width, topImage.height);
+
+    // Apply the mask
+    maskedTop.mask(currentMask);
+
+    // Draw the masked top image
+    image(maskedTop, x, y);
+    pop();
+    
+    // Draw knife cursor
+    push();
+    translate(mouseX, mouseY);
+    rotate(-PI / 4); // Rotate -45 degrees
+    image(knifeImage, -knifeImage.width/2, -knifeImage.height/2);
+    pop();
+    
+    // Hide default cursor
     noCursor();
+}
+
+function mousePressed() {
+    isMousePressed = true;
+}
+
+function mouseReleased() {
+    isMousePressed = false;
+}
+
+function mouseDragged() {
+    let x = (width - topImage.width) / 2;
+    let y = (height - topImage.height) / 2;
+    let mx = mouseX - x;
+    let my = mouseY - y;
+    
+    if (mx >= 0 && mx < topImage.width && my >= 0 && my < topImage.height) {
+        maskCanvas.noStroke();
+        maskCanvas.fill(0, 20); // Lower alpha = slower fade (more smooth)
+        maskCanvas.ellipse(mouseX, mouseY, 60, 60); // Soft fade shape
+    }
 }
